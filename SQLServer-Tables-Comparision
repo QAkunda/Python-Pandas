@@ -1,0 +1,84 @@
+# importing Libraries
+
+import pyodbc as py
+import pandas.io.sql
+import pandas as pd
+import time
+
+
+# establishing connection to DB
+PWD=''
+server_name=''
+db=''
+connection=py.connect('Driver={ODBC Driver 13 for SQL Server};Server='+server_name+';database='+db+';UID=;PWD='+PWD)
+
+# Comparing count between stage and destination tables
+# insert the stage query in STG
+# insert the destination query in DST
+
+STG="""Count Query """
+
+
+DST=""" Count Query""" 
+
+
+STG_C=pandas.io.sql.read_sql(STG,connection)
+DST_C=pandas.io.sql.read_sql(DST,connection)
+
+if (STG_C.values==DST_C.values):
+    print("The count is matching\n Count in destination is {} \n Count in stage is {}".format(DST_C.values,STG_C.values))
+else:
+    print("The count is not matching\n Count in stage is {} \n Count in destination is {}".format(STG_C.values,DST_C.values))
+    
+    # Comparing data between stage and destination tables
+# insert the stage query in STG
+# insert the destination query in DST
+
+STG=""" Query 1
+"""
+
+DST="""Query 2"""
+
+
+STG_Q=pandas.io.sql.read_sql(STG,connection)
+DST_Q=pandas.io.sql.read_sql(DST,connection)
+
+
+# change the column names in both the tables
+# use the column names while merging 
+
+STG_Q.columns=DST_Q.columns
+STG_Q.columns
+
+# code to make sure both the columns of the 2 dataframe have the same data type
+
+for x in DST_Q.columns:
+    STG_Q[x]=STG_Q[x].astype(DST_Q[x].dtype.name)
+    
+    
+# copy past the above col names in the merge query next to ON parameter
+
+CMP=pd.merge(STG_Q,DST_Q,on=<--Column Names enclosed within []--->,how='outer',indicator=True)
+
+
+# check if any of the data is missing in right
+
+CMP[CMP._merge=='right_only'].shape
+
+# check if any of the data is missing in left
+
+CMP[CMP._merge=='left_only'].shape
+
+
+# another way of comparing data
+
+DST_Q.equals(STG_Q)
+
+
+# fetching only the columns which are not matching and moving it to a different file
+
+gradbool=(DST_Q!=STG_Q).stack()
+graddiff=pandas.concat([DST_Q.stack()[gradbool],STG_Q.stack()[gradbool]],axis=1)
+graddiff.columns=[['Destination','Stage']]
+graddiff.to_csv(r'D:\\Testing_Data\\not_matching_data.csv')
+
